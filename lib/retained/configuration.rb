@@ -7,6 +7,7 @@ module Retained
     attr_accessor :prefix
     attr_reader :default_group
     attr_reader :group_configs
+    attr_writer :redis_connection
 
     def initialize
       @redis = { url: 'redis://localhost:6379' }

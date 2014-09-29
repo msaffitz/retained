@@ -68,6 +68,12 @@ For example, to configure a 'generated_report' group to use an hourly interval:
 	    group.reporting_interval = :hour
 	  end
 	end
+	
+If you need to have more control over the Redis connection (i.e. to use Sentinel), you can directly provide an already established connection:
+
+	Retained.configure do |config|
+	  config.redis_connection = Redis.new
+	end
 
 ### Non-Singleton Use
 

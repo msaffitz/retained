@@ -16,4 +16,9 @@ describe Retained::Configuration do
     end
     Retained::Configuration.new.group('group_b').reporting_interval.must_equal :minute
   end
+
+  it 'sets the redis connection directly' do
+    configuration.redis_connection = :REDIS_CONNECTION
+    configuration.redis_connection.must_equal :REDIS_CONNECTION
+  end
 end
