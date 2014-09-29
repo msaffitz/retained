@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 gem 'redis', '~> 3.1.0'
 gem 'redis-bitops', '~> 0.2.1'
-gem 'activesupport', '~> 4.1.5'
+gem 'activesupport'
 
 group :development do
   gem 'minitest', '>= 0'
