@@ -1,5 +1,5 @@
 require 'redis/bitops'
-require 'active_support/core_ext/time'
+require 'active_support/core_ext/time/calculations'
 require 'retained/configuration'
 
 module Retained
