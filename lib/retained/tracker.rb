@@ -22,7 +22,7 @@ module Retained
       bitmap[index] = true
     end
 
-    # Total active entities in the period, or now if now period,
+    # Total active entities in the period, or now if no period,
     # is provided.
     def total_active(group: 'default', period: Time.now)
       bitmap = config.redis_connection.sparse_bitmap(key_period(group, period))
@@ -30,7 +30,7 @@ module Retained
     end
 
     # Returns true if the entity was active in the given period,
-    # or now if now period is provided.  If a group or an array of groups
+    # or now if no period is provided.  If a group or an array of groups
     # is provided activity will only be considered based on those groups.
     def active?(entity, group: nil, period: Time.now)
       group = [group] if group.is_a?(String)
