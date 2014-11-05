@@ -1,7 +1,7 @@
 source 'http://rubygems.org'
 
 gem 'redis', '~> 3.1.0'
-gem 'redis-bitops', '~> 0.2.1'
+gem 'redis-bitops', github: 'msaffitz/redis-bitops', branch: 'watch_keys_fix'
 gem 'activesupport'
 
 group :development do

@@ -29,6 +29,19 @@ module Retained
       bitmap.bitcount
     end
 
+    # Returns the total number of unique active entities between
+    # the start and end periods (inclusive), or now if no stop
+    # period is provided.
+    def unique_active(group: 'default', start:, stop: Time.now)
+      bitmaps = []
+      while ( start <= stop)
+        bitmaps << config.redis_connection.sparse_bitmap(key_period(group, start))
+        start += seconds_in_reporting_interval(config.group(group).reporting_interval)
+      end
+      return 0  if bitmaps.length == 0
+      bitmaps.inject { |uniques,bitmap| uniques | bitmap }.bitcount
+    end
+
     # Returns true if the entity was active in the given period,
     # or now if no period is provided.  If a group or an array of groups
     # is provided activity will only be considered based on those groups.
@@ -72,6 +85,16 @@ LUA
     def key_period(group, period)
       period = period.utc.send("beginning_of_#{config.group(group).reporting_interval}")
       "#{config.prefix}:#{group}:#{period.to_i}"
+    end
+
+    private
+    def seconds_in_reporting_interval(interval)
+      case(interval.to_sym)
+        when :day    then 60*60*24
+        when :hour   then 60*60
+        when :minute then 60
+        else fail "Unknown reporting interval: #{interval}"
+      end
     end
   end
 end

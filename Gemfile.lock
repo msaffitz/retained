@@ -1,3 +1,11 @@
+GIT
+  remote: git://github.com/msaffitz/redis-bitops.git
+  revision: a82f1bdc809e843ff297bcaf4c7664d3fc461772
+  branch: watch_keys_fix
+  specs:
+    redis-bitops (0.2.1)
+      redis
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -55,8 +63,6 @@ GEM
     rdoc (3.12.2)
       json (~> 1.4)
     redis (3.1.0)
-    redis-bitops (0.2.1)
-      redis
     simplecov (0.9.0)
       docile (~> 1.1.0)
       multi_json
@@ -78,7 +84,7 @@ DEPENDENCIES
   minitest
   rdoc (~> 3.12)
   redis (~> 3.1.0)
-  redis-bitops (~> 0.2.1)
+  redis-bitops!
   simplecov
   timecop (~> 0.7.1)
   yard (~> 0.7)

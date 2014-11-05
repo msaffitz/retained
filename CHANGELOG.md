@@ -2,6 +2,7 @@
 
   * Fixed default group.  Was erroneously using an empty string
   instead of the string 'default'.
+  * Added unique_active method
 
 # 0.2.1
 
