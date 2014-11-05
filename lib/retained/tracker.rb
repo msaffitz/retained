@@ -16,7 +16,7 @@ module Retained
 
     # Tracks the entity as active at the period, or now if no period
     # is provided.
-    def retain(entity, group: group, period: Time.now)
+    def retain(entity, group: 'default', period: Time.now)
       index = entity_index(entity, group)
       bitmap = config.redis_connection.sparse_bitmap(key_period(group, period))
       bitmap[index] = true
@@ -24,7 +24,7 @@ module Retained
 
     # Total active entities in the period, or now if now period,
     # is provided.
-    def total_active(group: group, period: Time.now)
+    def total_active(group: 'default', period: Time.now)
       bitmap = config.redis_connection.sparse_bitmap(key_period(group, period))
       bitmap.bitcount
     end

@@ -28,6 +28,11 @@ describe Retained::Tracker do
     tracker.config.redis_connection.sparse_bitmap("#{prefix}:group_a:1409356800")[0]
   end
 
+  it 'retains using the "default" group' do
+    tracker.retain('entity_a')
+    tracker.groups.must_equal ['default']
+  end
+
   it 'retain without a period tracks the entity for the current period' do
     Timecop.freeze(Time.new(2014, 8, 29, 9, 03, 35)) do
       tracker.retain('entity_a', group: 'group_a')
@@ -37,12 +42,13 @@ describe Retained::Tracker do
     end
   end
 
-  it 'total_active returns the number of active entities in the default group in the period' do
+  it 'total_active returns the number of active entities in the "default" group in the period' do
     period = Time.new(2014, 8, 30, 10, 47, 35)
     (count = rand(100)).times do |i|
       tracker.retain("entity_#{i}", period: period)
     end
     tracker.total_active(period: period).must_equal count
+    tracker.total_active(group: "default", period: period).must_equal count
   end
 
   it 'total_active returns the number of active entities in the period' do
