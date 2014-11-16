@@ -34,7 +34,8 @@ module Retained
     # period is provided.
     def unique_active(group: 'default', start:, stop: Time.now)
       bitmaps = []
-      while ( start <= stop)
+      start = period_start(group, start)
+      while (start <= stop)
         bitmaps << config.redis_connection.sparse_bitmap(key_period(group, start))
         start += seconds_in_reporting_interval(config.group(group).reporting_interval)
       end
@@ -83,11 +84,15 @@ LUA
     # Returns the key for the group at the period.  All periods are
     # internally stored relative to UTC.
     def key_period(group, period)
-      period = period.utc.send("beginning_of_#{config.group(group).reporting_interval}")
-      "#{config.prefix}:#{group}:#{period.to_i}"
+      "#{config.prefix}:#{group}:#{period_start(group, period).to_i}"
     end
 
     private
+    # Returns the time (UTC) that the period starts at for the given group
+    def period_start(group, period)
+      period.utc.send("beginning_of_#{config.group(group).reporting_interval}")
+    end
+
     def seconds_in_reporting_interval(interval)
       case(interval.to_sym)
         when :day    then 60*60*24
