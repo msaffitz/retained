@@ -1,7 +1,7 @@
 GIT
   remote: git://github.com/msaffitz/redis-bitops.git
-  revision: a82f1bdc809e843ff297bcaf4c7664d3fc461772
-  branch: watch_keys_fix
+  revision: 2ebd12b5044046db67e7958eda0701257b3eb3f9
+  ref: 2ebd12b5044046db67e7958eda0701257b3eb3f9
   specs:
     redis-bitops (0.2.1)
       redis
