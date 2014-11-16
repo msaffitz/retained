@@ -1,3 +1,10 @@
+# 0.2.3
+
+  * Updated to latest redis-bitops, which includes multiple fixes
+  and performance improvements.
+  * Refactor to ensure that unique_active is properly measured
+  across measurement periods.
+
 # 0.2.2
 
   * Fixed default group.  Was erroneously using an empty string
