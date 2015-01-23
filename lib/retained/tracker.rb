@@ -1,5 +1,6 @@
-require 'redis/bitops'
+require 'redis'
 require 'active_support/core_ext/time/calculations'
+require 'securerandom'
 require 'retained/configuration'
 
 module Retained
@@ -18,29 +19,31 @@ module Retained
     # is provided.
     def retain(entity, group: 'default', period: Time.now)
       index = entity_index(entity, group)
-      bitmap = config.redis_connection.sparse_bitmap(key_period(group, period))
-      bitmap[index] = true
+      config.redis_connection.setbit key_period(group, period), index, 1
     end
 
     # Total active entities in the period, or now if no period,
     # is provided.
     def total_active(group: 'default', period: Time.now)
-      bitmap = config.redis_connection.sparse_bitmap(key_period(group, period))
-      bitmap.bitcount
+      config.redis_connection.bitcount key_period(group, period)
     end
 
     # Returns the total number of unique active entities between
     # the start and end periods (inclusive), or now if no stop
     # period is provided.
     def unique_active(group: 'default', start:, stop: Time.now)
-      bitmaps = []
+      keys = []
       start = period_start(group, start)
       while (start <= stop)
-        bitmaps << config.redis_connection.sparse_bitmap(key_period(group, start))
+        keys << key_period(group, start)
         start += seconds_in_reporting_interval(config.group(group).reporting_interval)
       end
-      return 0  if bitmaps.length == 0
-      bitmaps.inject { |uniques,bitmap| uniques | bitmap }.bitcount
+      return 0  if keys.length == 0
+
+      temp_bitmap do |key|
+        config.redis_connection.bitop 'OR', key, *keys
+        config.redis_connection.bitcount key
+      end
     end
 
     # Returns true if the entity was active in the given period,
@@ -51,9 +54,7 @@ module Retained
       group = groups if group == [] || !group
 
       group.to_a.each do |g|
-        bitmap = config.redis_connection.sparse_bitmap(key_period(g, period))
-        index = entity_index(entity, g)
-        return bitmap[index] if bitmap[index]
+        return true if config.redis_connection.getbit(key_period(g, period), entity_index(entity, g)) == 1
       end
       false
     end
@@ -88,6 +89,15 @@ LUA
     end
 
     private
+    def temp_bitmap
+      temp_key = "#{config.prefix}:temp:#{SecureRandom.hex}"
+      begin
+        yield temp_key
+      ensure
+        config.redis_connection.del temp_key
+      end
+    end
+
     # Returns the time (UTC) that the period starts at for the given group
     def period_start(group, period)
       period.utc.send("beginning_of_#{config.group(group).reporting_interval}")

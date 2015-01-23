@@ -1,3 +1,10 @@
+# 0.3.0
+
+  * BREAKING CHANGE:  Removed dependency on redis-bitops, which
+  while conserving space resulted in significant degradation of
+  performance due to the additional overhead of tracking chunks
+  and additional bit operations.
+
 # 0.2.3
 
   * Updated to latest redis-bitops, which includes multiple fixes

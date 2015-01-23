@@ -15,10 +15,10 @@ describe Retained::Tracker do
 
   it 'retain tracks using the default group in the current period' do
     Timecop.freeze(Time.new(2014, 8, 29, 9, 03, 35)) do
-     tracker.retain('entity_a')
+      tracker.retain('entity_a')
       prefix = tracker.config.prefix
       group  = tracker.config.default_group
-      tracker.config.redis_connection.sparse_bitmap("#{prefix}:#{group}:1409328000")[0]
+      tracker.active?('entity_a').must_equal true
     end
   end
 
@@ -27,7 +27,7 @@ describe Retained::Tracker do
     tracker.retain('entity_a', group: 'group_a', period: period)
 
     prefix = tracker.config.prefix
-    tracker.config.redis_connection.sparse_bitmap("#{prefix}:group_a:1409356800")[0]
+    tracker.active?('entity_a', period: period).must_equal true
   end
 
   it 'retains using the "default" group' do
@@ -40,7 +40,7 @@ describe Retained::Tracker do
       tracker.retain('entity_a', group: 'group_a')
 
       prefix = tracker.config.prefix
-      tracker.config.redis_connection.sparse_bitmap("#{prefix}:group_a:1409328000")[0]
+      tracker.active?('entity_a', group: 'group_a', period: Time.now).must_equal true
     end
   end
 
@@ -161,5 +161,33 @@ describe Retained::Tracker do
     tracker.key_period('hour', Time.new(2014, 8, 30, 10, 35, 47, 0)).must_equal 'retained:hour:1409392800'
     tracker.key_period('minute', Time.new(2014, 8, 30, 10, 35, 47, 5*3600)).must_equal 'retained:minute:1409376900'
     tracker.key_period('day', Time.new(2014, 8, 30, 10, 35, 47, -2*3600)).must_equal 'retained:day:1409356800'
+  end
+
+  it 'temp_bitmap cleans up the temporary bitmap' do
+    tmp_key = nil
+    tracker.send(:temp_bitmap) do |key|
+      tmp_key = key
+      tracker.config.redis_connection.setbit key, 0, 1
+    end
+    tracker.config.redis_connection.exists(tmp_key).must_equal false
+  end
+
+  it 'temp_bitmap cleans up the temporary bitmap with exception raised' do
+    tmp_key = nil
+    begin
+      tracker.send(:temp_bitmap) do |key|
+        tmp_key = key
+        tracker.config.redis_connection.setbit key, 0, 1
+        raise 'exception'
+      end
+    rescue
+    end
+    tracker.config.redis_connection.exists(tmp_key).must_equal false
+  end
+
+  it 'temp_bitmap returns the value' do
+    tracker.send(:temp_bitmap) do |key|
+      4
+    end.must_equal 4
   end
 end
