@@ -1,6 +1,6 @@
 # Retained: Activity & Retention Tracking at Scale
 
-Retained makes it easy to track activity and retention at scale in daily, hourly, or minute intervals using sparse Redis bitmaps.
+Retained makes it easy to track activity and retention at scale in daily, hourly, or minute intervals using Redis bitmaps.
 
 
 ## Requirements
@@ -101,4 +101,4 @@ You can connect to multiple backends for Retained by instantiating a Retained tr
 
 
 ---
-Copyright (c) 2014 Mike Saffitz. See LICENSE.txt for further details.
+Copyright (c) 2014-2015 Mike Saffitz. See LICENSE.txt for further details.
