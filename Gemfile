@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'redis', '~> 3.1.0'
+gem 'redis', '~> 3.1'
 gem 'activesupport'
 
 group :development do
