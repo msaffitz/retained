@@ -75,7 +75,7 @@ DEPENDENCIES
   jeweler (~> 2.0.1)
   minitest
   rdoc (~> 3.12)
-  redis (~> 3.1)
+  redis (~> 3.2)
   simplecov
   timecop (~> 0.7.1)
   yard (~> 0.7)
