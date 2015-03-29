@@ -1,3 +1,7 @@
+# 0.3.1
+
+  * Update redis gem dependency to ~3.2
+
 # 0.3.0
 
   * BREAKING CHANGE:  Removed dependency on redis-bitops, which
