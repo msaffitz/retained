@@ -32,18 +32,53 @@ module Retained
     # the start and end periods (inclusive), or now if no stop
     # period is provided.
     def unique_active(group: 'default', start:, stop: Time.now)
-      keys = []
-      start = period_start(group, start)
-      while (start <= stop)
-        keys << key_period(group, start)
-        start += seconds_in_reporting_interval(config.group(group).reporting_interval)
-      end
+      keys = period_range_keys(group, start, stop)
       return 0  if keys.length == 0
 
       temp_bitmap do |key|
         config.redis_connection.bitop 'OR', key, *keys
         config.redis_connection.bitcount key
       end
+    end
+
+    # Returns the total number of unique active entities retained between
+    # an initial and a final period range.  Each period range consists
+    # of a start period and an end period (inclusive).  The final period
+    # range's starting period must be after the inital period range's ending
+    # period.
+    def total_retained(group: 'default', initial_start:, initial_stop:,
+                                         final_start:  , final_stop:)
+      #raise ArgumentError, "final_start must be after initial_stop"  if final_start <= initial_stop
+      initial_keys = period_range_keys(group, initial_start, initial_stop)
+      final_keys   = period_range_keys(group, final_start,    final_stop)
+
+      return 0  if initial_keys == 0 || final_keys == 0
+
+      temp_bitmap do |key|
+        temp_bitmap do |initial_key|
+          config.redis_connection.bitop 'OR', initial_key, *initial_keys
+          temp_bitmap do |final_key|
+            config.redis_connection.bitop 'OR', final_key, *final_keys
+            config.redis_connection.bitop 'AND', key, initial_key, final_key
+            config.redis_connection.bitcount key
+          end
+        end
+      end
+    end
+
+    # Returns the percent retained (as a float) retained between
+    # an initial and a final period range.  Each period range consists
+    # of a start period and an end period (inclusive).  The final period
+    # range's starting period must be after the inital period range's ending
+    # period.  If there are no entities in the initial period, Float::NAN is returned.
+    def retention(group: 'default', initial_start:, initial_stop:,
+                                    final_start:  , final_stop:)
+      initial_count = unique_active(group: group, start: initial_start, stop: initial_stop)
+      retained = total_retained(group: group, initial_start: initial_start,
+                                              initial_stop:  initial_stop,
+                                              final_start: final_start,
+                                              final_stop: final_stop)
+      return retained / initial_count.to_f
     end
 
     # Returns true if the entity was active in the given period,
@@ -89,8 +124,18 @@ LUA
     end
 
     private
-    def temp_bitmap
-      temp_key = "#{config.prefix}:temp:#{SecureRandom.hex}"
+    def period_range_keys(group, start, stop)
+      keys = []
+      start = period_start(group, start)
+      while (start <= stop)
+        keys << key_period(group, start)
+        start += seconds_in_reporting_interval(config.group(group).reporting_interval)
+      end
+      keys
+    end
+
+    def temp_bitmap(temp_key=SecureRandom.hex)
+      temp_key = "#{config.prefix}:temp:#{temp_key}"
       begin
         yield temp_key
       ensure

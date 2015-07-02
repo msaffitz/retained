@@ -119,6 +119,86 @@ describe Retained::Tracker do
     end
   end
 
+  describe "total_retained" do
+    before(:each) do
+      tracker.configure do |config|
+        config.group('hour') { |g| g.reporting_interval = :hour }
+        config.group('minute') { |g| g.reporting_interval = :minute }
+        config.group('day') { |g| g.reporting_interval = :day}
+      end
+    end
+
+    it 'properly tracks retention when the reporting_interval is day' do
+      Timecop.freeze do
+        # Initial Period
+        [1,2].each { |e| tracker.retain(e, group: 'day', period: Time.now - 4*SECONDS_PER_DAY)}
+        [3,4].each { |e| tracker.retain(e, group: 'day', period: Time.now - 3*SECONDS_PER_DAY)}
+
+        # Final Period
+        tracker.retain(2, group: 'day', period: Time.now)
+        tracker.retain(3, group: 'day', period: Time.now - 2*SECONDS_PER_DAY)
+
+        tracker.total_retained(group: 'day', initial_start: Time.now - 4*SECONDS_PER_DAY, initial_stop: Time.now - 3*SECONDS_PER_DAY,
+                                             final_start:   Time.now - 2*SECONDS_PER_DAY, final_stop:   Time.now                     ).must_equal 2
+        tracker.total_retained(group: 'day', initial_start: Time.now - 4*SECONDS_PER_DAY, initial_stop: Time.now - 3*SECONDS_PER_DAY,
+                                             final_start:   Time.now                    , final_stop:   Time.now                     ).must_equal 1
+      end
+    end
+
+    it 'properly tracks retention when the reporting_interval is hour' do
+      Timecop.freeze do
+        # Initial Period
+        [1,2].each { |e| tracker.retain(e, group: 'hour', period: Time.now - 4*SECONDS_PER_HOUR)}
+        [3,4].each { |e| tracker.retain(e, group: 'hour', period: Time.now - 3*SECONDS_PER_HOUR)}
+
+        # Final Period
+        tracker.retain(2, group: 'hour', period: Time.now)
+        tracker.retain(3, group: 'hour', period: Time.now - 2*SECONDS_PER_HOUR)
+
+        tracker.total_retained(group: 'hour', initial_start: Time.now - 4*SECONDS_PER_HOUR, initial_stop: Time.now - 3*SECONDS_PER_HOUR,
+                                              final_start:   Time.now - 2*SECONDS_PER_HOUR, final_stop:   Time.now                      ).must_equal 2
+        tracker.total_retained(group: 'hour', initial_start: Time.now - 4*SECONDS_PER_HOUR, initial_stop: Time.now - 3*SECONDS_PER_HOUR,
+                                              final_start:   Time.now                     , final_stop:   Time.now                      ).must_equal 1
+      end
+    end
+
+    it 'properly tracks retention when the reporting_interval is minute' do
+      Timecop.freeze do
+        # Initial Period
+        [1,2].each { |e| tracker.retain(e, group: 'minute', period: Time.now - 4*60)}
+        [3,4].each { |e| tracker.retain(e, group: 'minute', period: Time.now - 3*60)}
+
+        # Final Period
+        tracker.retain(2, group: 'minute', period: Time.now)
+        tracker.retain(3, group: 'minute', period: Time.now - 2*60)
+
+        tracker.total_retained(group: 'minute', initial_start: Time.now - 4*60, initial_stop: Time.now - 3*60,
+                                                final_start:   Time.now - 2*60, final_stop:   Time.now        ).must_equal 2
+        tracker.total_retained(group: 'minute', initial_start: Time.now - 4*60, initial_stop: Time.now - 3*60,
+                                                final_start:   Time.now       , final_stop:    Time.now       ).must_equal 1
+      end
+    end
+  end
+
+  it 'retention properly returns retention percent' do
+    Timecop.freeze do
+      # Initial Period
+      [1,2].each { |e| tracker.retain(e, group: 'minute', period: Time.now - 4*SECONDS_PER_DAY)}
+      [3,4].each { |e| tracker.retain(e, group: 'minute', period: Time.now - 3*SECONDS_PER_DAY)}
+
+      # Final Period
+      tracker.retain(2, group: 'minute', period: Time.now)
+      tracker.retain(3, group: 'minute', period: Time.now - 2*SECONDS_PER_DAY)
+
+      tracker.retention(group: 'minute', initial_start: Time.now - 4*SECONDS_PER_DAY, initial_stop: Time.now - 3*SECONDS_PER_DAY,
+                                         final_start:   Time.now - 2*SECONDS_PER_DAY, final_stop:   Time.now                     ).must_equal 0.5
+
+      tracker.retention(group: 'minute', initial_start: Time.now - 4*SECONDS_PER_DAY, initial_stop: Time.now - 3*SECONDS_PER_DAY,
+                                         final_start:   Time.now                    , final_stop:   Time.now                     ).must_equal 0.25
+    end
+  end
+
+
   describe 'active?' do
     it 'returns true when the entity is active' do
       Timecop.freeze do
