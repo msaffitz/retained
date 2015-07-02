@@ -1,3 +1,9 @@
+# 0.3.2
+
+  * Remove redis gem dependency version
+  * Added total_retained and retention methods for directly
+  calculating retention between to period ranges.
+
 # 0.3.1
 
   * Update redis gem dependency to ~3.2
